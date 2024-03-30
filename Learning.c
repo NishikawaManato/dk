@@ -1,8 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-//‘w‚ðƒŠƒZƒbƒg
-void resetLayer(float layer[3][5]){
+#include <math.h>
+
+//ã‚·ã‚°ãƒ¢ã‚¤ãƒ‰é–¢æ•°
+double sigmoid(double x)
+{
+    return 1.0 / (1.0 + exp(-x));
+}
+
+//å±¤ã‚’ãƒªã‚»ãƒƒãƒˆ
+void resetLayer(double layer[3][5]){
     for(int i=0;i<3;i++){
         for(int j=0;j<5;j++){
             layer[i][j]=0;
@@ -10,8 +18,8 @@ void resetLayer(float layer[3][5]){
     }
 }
 
-//w‚É—”‚ðƒZƒbƒg
-void randW(float w[4][5][5]){
+//wã«ä¹±æ•°ã‚’ã‚»ãƒƒãƒˆ
+void randW(double w[4][5][5]){
     srand(time(NULL));
     for(int k=0;k<4;k++){
         for(int j=0;j<5;j++){
@@ -22,35 +30,35 @@ void randW(float w[4][5][5]){
     }
 }
 
-//“ü—Í‘w‚©‚ç‰B‚ê‘w
-void fromInToHide(float layer[3][5],float w[4][5][5],float input[5]){
+//å…¥åŠ›å±¤ã‹ã‚‰éš ã‚Œå±¤
+void fromInToHidden(double layer[3][5],double w[4][5][5],double input[5]){
     for(int j=0;j<5;j++){
         for(int i=0;i<5;i++){
-            layer[0][j]=layer[0][j]+w[0][i][j]*input[i];
+            layer[0][j]=sigmoid(layer[0][j]+w[0][i][j]*input[i]);
         }
     }
 }
 
-//‰B‚ê‘w‚ÌŒvŽZ
-void hideLayer(float layer[3][5],float w[4][5][5]){
+//éš ã‚Œå±¤ã®è¨ˆç®—
+void hideLayer(double layer[3][5],double w[4][5][5]){
     for(int k=0;k<2;k++){
         for(int j=0;j<5;j++){
             for(int i=0;i<5;i++){
-                layer[k+1][j]=layer[k+1][j]+w[k+1][i][j]*layer[k][i];
+                layer[k+1][j]=sigmoid(layer[k+1][j]+w[k+1][i][j]*layer[k][i]);
             }
         }
     }
 }
-//‰B‚ê‘w‚©‚ço—Í‘w
-void fromHideToOut(float layer[3][5],float w[4][5][5],float output[5]){
+//éš ã‚Œå±¤ã‹ã‚‰å‡ºåŠ›å±¤
+void fromHiddenToOut(double layer[3][5],double w[4][5][5],double output[5]){
     for(int j=0;j<5;j++){
         for(int i=0;i<5;i++){
-            output[j]=output[j]+w[3][i][j]*layer[2][i];
+            output[j]=sigmoid(output[j]+w[3][i][j]*layer[2][i]);
         }
     }
 }
-//“üo—Í‘w‚Ìo—Í
-void printio(float io[5]){
+//å…¥å‡ºåŠ›å±¤ã®å‡ºåŠ›
+void printio(double io[5]){
     printf("{");
     for(int j=0;j<4;j++){
         printf("%f,",io[j]);
@@ -58,8 +66,8 @@ void printio(float io[5]){
     printf("%f}\n",io[4]);
 }
 
-//‰B‚ê‘w‚Ìo—Í
-void printHide(float hide[3][5]){
+//éš ã‚Œå±¤ã®å‡ºåŠ›
+void printHidden(double hide[3][5]){
     for(int i=0;i<3;i++){
         printf("{");
     for(int j=0;j<4;j++){
@@ -68,39 +76,60 @@ void printHide(float hide[3][5]){
     printf("%f}\n",hide[i][4]);
     }
 }
+//å¹³å‡äºŒä¹—èª¤å·®
+double MSE(double output[5],double t[5]){
+    double answer=0;
+    for(int i=0;i<5;i++){
+        answer=+pow(output[i]-t[i],2);
+    }
+    return sqrt(answer/5);
+}
+
 /*------------------------------------------------------------
-                            ˆÈ‰ºmainŠÖ”
+                            ä»¥ä¸‹mainé–¢æ•°
 ------------------------------------------------------------*/
 int main(int argc[]){
-    float layer[3][5]={{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
-    float w[4][5][5]={{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}},{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}},{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}},{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}}};
-    float input[5]={0.5,0.2,0.3,0.5,0.4};
-    float output[5]={0,0,0,0,0};
-    //‘w‚ðƒŠƒZƒbƒg
+    double layer[3][5]={{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
+    double w[4][5][5]={{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}},{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}},{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}},{{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1},{1,1,1,1,1}}};
+    double input[5]={0.5,-0.2,0.3,-0.5,0.4};
+    double output[5]={0,0,0,0,0};
+    double t[5]={0.5,-0.2,0.3,-0.5,0.4};
+    //å±¤ã‚’ãƒªã‚»ãƒƒãƒˆ
     resetLayer(layer);
 
-    //w‚É—”‚ðƒZƒbƒg
+    //wã«ä¹±æ•°ã‚’ã‚»ãƒƒãƒˆ
     randW(w);
 
-    //“ü—Í‘w‚©‚ç‰B‚ê‘w
-    fromInToHide(layer,w,input);
+    //å…¥åŠ›å±¤ã‹ã‚‰éš ã‚Œå±¤
+    fromInToHidden(layer,w,input);
 
-    //‰B‚ê‘w‚ÌŒvŽZ
+    //éš ã‚Œå±¤ã®è¨ˆç®—
     hideLayer(layer,w);
 
-    //‰B‚ê‘w‚©‚ço—Í‘w
-    fromHideToOut(layer,w,output);
+    //éš ã‚Œå±¤ã‹ã‚‰å‡ºåŠ›å±¤
+    fromHiddenToOut(layer,w,output);
 
-    //“ü—Í‘w‚Ìo—Í
-    printf("“ü—Í‘w\n");
+
+    //å…¥åŠ›å±¤ã®å‡ºåŠ›
+    printf("å…¥åŠ›å±¤\n");
     printio(input);
 
-    //‰B‚ê‘w‚Ìo—Í
-    printf("‰B‚ê‘w\n");
-    printHide(layer);
+    //éš ã‚Œå±¤ã®å‡ºåŠ›
+    printf("éš ã‚Œå±¤\n");
+    printHidden(layer);
 
-    //o—Í‘w‚Ìo—Í
-    printf("o—Í‘w\n");
+    //å‡ºåŠ›å±¤ã®å‡ºåŠ›
+    printf("å‡ºåŠ›å±¤\n");
     printio(output);
 
+    //å¹³å‡ã«ä¹—èª¤å·®ã®å‡ºåŠ›
+    printf("èª¤å·®è©•ä¾¡\n");
+    printf("%f",MSE(output,t));
+
+    /*
+    é€†ä¼æ’­æ³•ã‚’å°Žå…¥
+    */
+
+
+    
 }
